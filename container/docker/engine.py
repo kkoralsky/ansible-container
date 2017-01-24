@@ -108,7 +108,7 @@ class Engine(BaseEngine):
                     logger.error("ERROR: encountered the following while attempting to get hosts touhed by main.yml:")
                     for line in lines:
                         logger.error(line)
-                    raise AnsibleContainerListHostsException("ERROR: unable to get the list of hosts touched by main.yml") 
+                    raise AnsibleContainerListHostsException("ERROR: unable to get the list of hosts touched by main.yml")
                 lines_minus_builder_host = [line.rsplit('|', 1)[1] for line
                                             in lines if '|' in line]
                 host_lines = set(line.strip() for line in lines_minus_builder_host
@@ -605,7 +605,7 @@ class Engine(BaseEngine):
         )
         # Only add WORKDIR if it does not contain an unexpanded environment var
         workdir = self.config['services'][host].get('working_dir', '/')
-        image_config['WORKDIR'] = workdir if not re.search('\$|\{', workdir) else '/' 
+        image_config['WORKDIR'] = workdir if not re.search('\$|\{', workdir) else '/'
 
         if flatten:
             logger.info('Flattening image...')
@@ -778,6 +778,7 @@ class Engine(BaseEngine):
         client = self.get_client()
         image_id, image_buildstamp = get_latest_image_for(self.project_name,
                                                           host, client)
+        tag = self.params.get('tag', image_buildstamp)
 
         repository = "%s/%s-%s" % (namespace, self.project_name, host)
         if url != self.default_registry_url:
@@ -785,11 +786,11 @@ class Engine(BaseEngine):
             repository = "%s/%s" % (re.sub('/$', '', url), repository)
 
         logger.info('Tagging %s' % repository)
-        client.tag(image_id, repository, tag=image_buildstamp)
+        client.tag(image_id, repository, tag=tag)
 
-        logger.info('Pushing %s:%s...' % (repository, image_buildstamp))
+        logger.info('Pushing %s:%s...' % (repository, tag))
         stream = client.push(repository,
-                             tag=image_buildstamp,
+                             tag=tag,
                              stream=True)
         last_status = None
         for data in stream:
@@ -826,7 +827,7 @@ class Engine(BaseEngine):
         """
         Build common Docker Compose elements required to execute orchestrate,
         terminate, restart, etc.
-        
+
         :param temp_dir: A temporary directory usable as workspace
         :param behavior: x in x_operation_extra_args
         :param operation: Operation to perform, like, build, run, listhosts, etc
